@@ -1,0 +1,127 @@
+<!-- templates/workouts/workout_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Тренировки - SportApp{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Заголовок и фильтры -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-dumbbell text-primary me-2"></i>Тренировки
+            </h1>
+            <p class="text-muted small mb-0">
+                {{ workout_stats.total_workouts }} программ •
+                {{ workout_stats.home_workouts }} домашних •
+                {{ workout_stats.gym_workouts }} для зала
+            </p>
+        </div>
+        <div class="dropdown">
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button"
+                    data-bs-toggle="dropdown">
+                <i class="fas fa-filter me-1"></i>Фильтры
+            </button>
+            <div class="dropdown-menu dropdown-menu-end">
+                <h6 class="dropdown-header">📍 Место</h6>
+                <a class="dropdown-item {% if not current_filters.type %}active{% endif %}"
+                   href="?">Все тренировки</a>
+                <a class="dropdown-item {% if current_filters.type == 'home_strength' %}active{% endif %}"
+                   href="?type=home_strength">💪 Домашняя сила</a>
+                <a class="dropdown-item {% if current_filters.type == 'home_cardio' %}active{% endif %}"
+                   href="?type=home_cardio">🏃 Домашнее кардио</a>
+                <a class="dropdown-item {% if current_filters.type == 'gym_strength' %}active{% endif %}"
+                   href="?type=gym_strength">🏋️ Силовая в зале</a>
+                <a class="dropdown-item {% if current_filters.type == 'gym_cardio' %}active{% endif %}"
+                   href="?type=gym_cardio">🚴 Кардио в зале</a>
+
+                <div class="dropdown-divider"></div>
+                <h6 class="dropdown-header">🎯 Сложность</h6>
+                <a class="dropdown-item {% if current_filters.difficulty == 'beginner' %}active{% endif %}"
+                   href="?difficulty=beginner">🟢 Начинающий</a>
+                <a class="dropdown-item {% if current_filters.difficulty == 'intermediate' %}active{% endif %}"
+                   href="?difficulty=intermediate">🟡 Средний</a>
+                <a class="dropdown-item {% if current_filters.difficulty == 'advanced' %}active{% endif %}"
+                   href="?difficulty=advanced">🔴 Продвинутый</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Список тренировок -->
+    <div class="row g-3">
+        {% for workout in workouts %}
+        <div class="col-12">
+            <div class="card workout-card workout-{{ workout.workout_type }} shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="d-flex align-items-center mb-2">
+                                <h5 class="card-title mb-0 me-2">{{ workout.name }}</h5>
+                                <span class="badge workout-badge bg-light text-dark">
+                                    {{ workout.get_difficulty_display }}
+                                </span>
+                            </div>
+
+                            <p class="card-text text-muted small mb-2">
+                                <i class="fas fa-clock me-1"></i>{{ workout.duration }} мин •
+                                <i class="fas fa-fire me-1 ms-2"></i>{{ workout.calories_burned }} ккал •
+                                <i class="fas fa-dumbbell me-1 ms-2"></i>{{ workout.exercises.count }} упр.
+                            </p>
+
+                            <p class="card-text small mb-2">{{ workout.description|truncatewords:20 }}</p>
+
+                            <div class="equipment-tags">
+                                {% for equipment in workout.exercises.values_list|slice:":3" %}
+                                    <span class="badge bg-secondary me-1">{{ equipment.get_equipment_display }}</span>
+                                {% endfor %}
+                                {% if workout.exercises.count > 3 %}
+                                    <span class="badge bg-light text-dark">+{{ workout.exercises.count|add:"-3" }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'workout_detail' workout.pk %}"
+                               class="btn btn-primary btn-sm">
+                                <i class="fas fa-info-circle me-1"></i>Подробнее
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="fas fa-dumbbell fa-3x text-muted mb-3"></i>
+            <p class="text-muted">Тренировки не найдены</p>
+            <a href="?" class="btn btn-outline-primary">Сбросить фильтры</a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Пагинация (если нужно) -->
+    {% if workouts.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if workouts.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ workouts.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Назад</a>
+            </li>
+            {% endif %}
+
+            {% for i in workouts.paginator.page_range %}
+            <li class="page-item {% if workouts.number == i %}active{% endif %}">
+                <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+            </li>
+            {% endfor %}
+
+            {% if workouts.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ workouts.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Вперед</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
