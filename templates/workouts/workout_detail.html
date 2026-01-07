@@ -1,0 +1,113 @@
+<!-- templates/workouts/workout_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Заголовок тренировки -->
+    <div class="card mb-4 workout-{{ workout.workout_type }} border-0">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-2">
+                        <h1 class="h4 card-title mb-0 me-2">{{ workout.name }}</h1>
+                        <span class="badge workout-badge bg-primary">{{ workout.get_difficulty_display }}</span>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge bg-secondary">
+                            <i class="fas fa-clock me-1"></i>{{ workout.duration }} мин
+                        </span>
+                        <span class="badge bg-danger">
+                            <i class="fas fa-fire me-1"></i>{{ workout.calories_burned }} ккал
+                        </span>
+                        <span class="badge bg-info">
+                            <i class="fas fa-dumbbell me-1"></i>{{ exercises|length }} упражнений
+                        </span>
+                    </div>
+
+                    <p class="card-text">{{ workout.description }}</p>
+                </div>
+            </div>
+
+            {% if user_completions > 0 %}
+            <div class="alert alert-success d-flex align-items-center mb-0">
+                <i class="fas fa-trophy me-2"></i>
+                <div>
+                    <strong>Вы завершили эту тренировку {{ user_completions }} раз</strong>
+                    <div class="small">Продолжайте в том же духе! 💪</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Кнопка старта -->
+    <div class="fixed-bottom p-3 bg-white border-top">
+        <div class="d-grid">
+            <a href="{% url 'start_workout' workout.pk %}" class="btn btn-success btn-lg py-3">
+                <i class="fas fa-play-circle me-2"></i>Начать тренировку
+            </a>
+        </div>
+    </div>
+
+    <!-- Упражнения -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <h3 class="h5 mb-0">
+                <i class="fas fa-list-ol me-2 text-primary"></i>План тренировки
+            </h3>
+        </div>
+        <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+                {% for exercise in exercises %}
+                <div class="list-group-item exercise-item border-0">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1 me-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-light text-dark me-2">{{ forloop.counter }}</span>
+                                <h6 class="mb-0 fw-bold">{{ exercise.name }}</h6>
+                            </div>
+
+                            <p class="small text-muted mb-2">{{ exercise.description }}</p>
+
+                            <div class="d-flex flex-wrap gap-3">
+                                <small class="text-primary">
+                                    <i class="fas fa-redo me-1"></i>{{ exercise.sets }} × {{ exercise.reps }}
+                                </small>
+                                <small class="text-secondary">
+                                    <i class="fas fa-clock me-1"></i>Отдых: {{ exercise.rest_time }} сек
+                                </small>
+                                {% if exercise.equipment != 'none' %}
+                                <small class="text-info">
+                                    <i class="fas fa-toolbox me-1"></i>{{ exercise.get_equipment_display }}
+                                </small>
+                                {% endif %}
+                            </div>
+
+                            {% if exercise.target_muscles %}
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-crosshairs me-1"></i>{{ exercise.target_muscles }}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if exercise.demonstration_url %}
+                        <a href="{{ exercise.demonstration_url }}" target="_blank"
+                           class="btn btn-outline-primary btn-sm flex-shrink-0">
+                            <i class="fas fa-play"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Отступ для нижней кнопки -->
+    <div style="height: 80px;"></div>
+</div>
+{% endblock %}
