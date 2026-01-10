@@ -107,3 +107,55 @@ def workout_session(request, session_id):
         ])
     }
     return render(request, 'workouts/workout_session.html', context)
+
+
+@login_required
+def progress_dashboard(request):
+    # Базовая статистика
+    user_sessions = WorkoutSession.objects.filter(user=request.user)
+
+    total_stats = user_sessions.aggregate(
+        total_sessions=Count('id'),
+        total_minutes=Sum('duration'),
+        avg_rating=Avg('rating'),
+        total_calories=Sum('workout_plan__calories_burned')
+    )
+
+    # Статистика за последние 30 дней
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    monthly_stats = user_sessions.filter(
+        start_time__gte=thirty_days_ago
+    ).aggregate(
+        sessions=Count('id'),
+        minutes=Sum('duration'),
+        avg_duration=Avg('duration')
+    )
+
+    # Распределение по типам тренировок
+    workout_distribution = user_sessions.values(
+        'workout_plan__workout_type'
+    ).annotate(
+        count=Count('id'),
+        total_duration=Sum('duration')
+    ).order_by('-count')
+
+    # Последние тренировки
+    recent_sessions = user_sessions.select_related('workout_plan')[:10]
+
+    # Прогресс по неделям
+    weekly_progress = user_sessions.extra({
+        'week': "EXTRACT(WEEK FROM start_time)",
+        'year': "EXTRACT(YEAR FROM start_time)"
+    }).values('year', 'week').annotate(
+        sessions=Count('id'),
+        total_minutes=Sum('duration')
+    ).order_by('-year', '-week')[:8]
+
+    context = {
+        'total_stats': total_stats,
+        'monthly_stats': monthly_stats,
+        'workout_distribution': workout_distribution,
+        'recent_sessions': recent_sessions,
+        'weekly_progress': weekly_progress,
+    }
+    return render(request, 'workouts/progress_dashboard.html', context)
